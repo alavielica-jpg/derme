@@ -1,0 +1,15 @@
+streamlit
+opencv-python
+numpy
+Pillow
+torch
+torchvision
+scikit-learn
+pandas
+matplotlib
+seaborn
+python-dotenv
+pytest
+notebook
+ipykernel
+nbstripo
