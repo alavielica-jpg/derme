@@ -20,7 +20,10 @@ models/weights/*
 *.sqlite
 *.sqlite3
 tests/sample_images/*
+tests/demo_images/*
+models/*
 !tests/sample_images/.gitkeep
+!tests/demo_images/.gitkeep
 .vscode/
 .idea/
 .DS_Store
