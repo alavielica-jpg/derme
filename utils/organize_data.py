@@ -1,3 +1,13 @@
+"""Build train/val/test folders from the raw SCIN download.
+
+Run from the repo root (never from inside utils/):
+    python -m utils.organize_data --survey
+
+Prints how many cases have each top condition label. Use it to pick classes.
+    python -m utils.organize_data --classes Eczema Psoriasis Acne
+
+Builds data/processed/{train,val,test}/<class>/ for those conditions.
+"""
 import argparse
 import ast
 import csv
@@ -14,15 +24,16 @@ IMG_DIR = SCIN_DIR / "images"
 
 
 def top_label(record):
+    #Return (label, weight) of the clear winner, or (None, 0.0) if none.
     raw = record.get("weighted_skin_condition_label")
     if not raw:
         return None, 0.0
-    weights = ast.literal_eval(raw)  
+    weights = ast.literal_eval(raw)  # stored as a string that looks like a dict
     if not weights:
         return None, 0.0
     best = max(weights.values())
     winners = [k for k, v in weights.items() if v == best]
-    if len(winners) > 1: 
+    if len(winners) > 1:  # tie, no clear label
         return None, 0.0
     return winners[0], best
 
@@ -89,7 +100,8 @@ def build(records, classes, min_weight, val_frac, test_frac):
             out.mkdir(parents=True, exist_ok=True)
             img_counts[split] = 0
             for r in split_cases:
-                for fname in r.get("files") or []:
+                # a case can list the same file several times; keep each once
+                for fname in dict.fromkeys(r.get("files") or []):
                     src = IMG_DIR / fname
                     if not src.exists():
                         missing += 1
