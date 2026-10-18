@@ -1,6 +1,6 @@
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = ROOT / "data" / "raw"            # data/raw/<class_name>/*.jpg
 PROC_DIR = ROOT / "data" / "processed"     # train/ val/ test/ created by organize_data.py
 MODEL_DIR = ROOT / "models"
