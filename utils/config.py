@@ -7,7 +7,7 @@ MODEL_DIR = ROOT / "models"
 REPORT_DIR = ROOT / "reports"
 DB_PATH = ROOT / "screener.db"
 
-MODEL_PATH = MODEL_DIR / "skin_model.keras"
+MODEL_PATH = MODEL_DIR / "skin_model.pt"
 META_PATH = MODEL_DIR / "meta.json"            # class names, backbone, img size
 THRESHOLD_PATH = MODEL_DIR / "threshold.json"  # tuned by evaluate.py
 
