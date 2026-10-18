@@ -13,3 +13,5 @@ pytest
 notebook
 ipykernel
 nbstripo
+requests
+datasets
