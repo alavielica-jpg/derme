@@ -2,7 +2,7 @@ import cv2
 from PIL import Image
 from torchvision import transforms
 
-from config import IMAGENET_MEAN, IMAGENET_STD, IMG_SIZE
+from utils.config import IMAGENET_MEAN, IMAGENET_STD, IMG_SIZE
 
 def get_eval_transform(img_size=IMG_SIZE):
     return transforms.Compose([
