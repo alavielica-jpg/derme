@@ -11,7 +11,8 @@ MODEL_PATH = MODEL_DIR / "skin_model.keras"
 META_PATH = MODEL_DIR / "meta.json"            # class names, backbone, img size
 THRESHOLD_PATH = MODEL_DIR / "threshold.json"  # tuned by evaluate.py
 
-BACKBONE = "mobilenetv2"  
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD = [0.229, 0.224, 0.225] 
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
 SEED = 42
