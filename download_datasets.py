@@ -68,11 +68,13 @@ def export_scin():
     meta = []
     for i, row in enumerate(ds):
         rec, files = {}, []
+        n = 0  # photo counter for the WHOLE case, across all image columns
         for k, v in row.items():
             items = v if isinstance(v, list) else [v]
             if items and all(isinstance(x, Image.Image) for x in items):
-                for j, im in enumerate(items):
-                    fn = f"{i:05d}_{j}.jpg"
+                for im in items:
+                    fn = f"{i:05d}_{n}.jpg"
+                    n += 1
                     im.convert("RGB").save(out / "images" / fn, quality=95)
                     files.append(fn)
             else:
