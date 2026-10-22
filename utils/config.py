@@ -21,7 +21,7 @@ HEAD_EPOCHS = 10
 FINE_TUNE_EPOCHS = 8
 FINE_TUNE_LAST_N_LAYERS = 30
 HEAD_LR = 1e-3
-FINE_TUNE_LR = 1e-5
+FINE_TUNE_LR = 1e-4
 
 MIN_SIDE_PX = 451            # resolution floor (shortest side)
 BLUR_THRESHOLD = 15.0       # Laplacian variance below this = blurry
