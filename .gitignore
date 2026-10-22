@@ -28,3 +28,4 @@ models/*
 .idea/
 .DS_Store
 Thumbs.db
+reports/failures.csv
