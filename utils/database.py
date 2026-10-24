@@ -1,5 +1,4 @@
 """Minimal SQLite layer for clients, sessions, and screening history.
-
 Stores results only (labels, scores, quality metrics, file names). The photos
 themselves are never saved.
 """
@@ -7,6 +6,7 @@ import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
 
 from utils import config
 
@@ -14,6 +14,7 @@ from utils import config
 @contextmanager
 def _conn():
     """Open the database, commit on success, roll back on error, always close."""
+    Path(config.DB_PATH).parent.mkdir(parents=True, exist_ok=True)  # folder may not exist on a fresh server
     conn = sqlite3.connect(config.DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
