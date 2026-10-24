@@ -29,3 +29,5 @@ models/*
 .DS_Store
 Thumbs.db
 reports/failures.csv
+!models/skin_model.pt
+!models/threshold.json
