@@ -6,7 +6,6 @@ Run from the repo root (never from inside utils/):
 Prints:  overall and per-class results, a "just guess the biggest class" baseline,
          accuracy by skin-tone band, and the confidence threshold. The threshold is
          chosen on the VALIDATION photos and then only checked on the test photos.
-
 Writes:  reports/confusion_matrix.png, reports/failures.csv, models/threshold.json
 """
 import argparse
@@ -30,16 +29,26 @@ from utils.train import build_model
 
 MIN_ACCEPTED = 10  # a threshold must keep at least this many photos to be trusted
 
+# --candidate scores models/skin_model_candidate.pt and writes every output under a
+# "_candidate" name, so the deployed model's threshold and reports are never overwritten.
+SUFFIX = ""
+
+
+def model_file():
+    if SUFFIX:
+        return config.MODEL_PATH.with_name("skin_model_candidate.pt")
+    return config.MODEL_PATH
+
 
 def load_model(device):
-    ckpt = torch.load(config.MODEL_PATH, map_location=device)
+    ckpt = torch.load(model_file(), map_location=device)
     model = build_model(len(ckpt["classes"]), pretrained=False)
     model.load_state_dict(ckpt["state_dict"])
     return model.to(device).eval(), ckpt["classes"], ckpt["img_size"]
 
 
 def get_probs(model, loader, device):
-    #Probability of each class for every test image, as a numpy array.
+    """Probability of each class for every test image, as a numpy array."""
     chunks = []
     with torch.no_grad():
         for images, _ in loader:
@@ -48,7 +57,7 @@ def get_probs(model, loader, device):
 
 
 def tone_band(fst_label):
-    #'FST4' -> 'medium (FST 3-4)'. Bands are coarse because the test set is small.
+    """'FST4' -> 'medium (FST 3-4)'. Bands are coarse because the test set is small."""
     match = re.search(r"\d", fst_label or "")
     if not match:
         return "unknown"
@@ -93,7 +102,7 @@ def plot_confusion(cm, classes):
     ax.set_ylabel("True")
     ax.set_title("Confusion matrix (test)")
     fig.tight_layout()
-    fig.savefig(config.REPORT_DIR / "confusion_matrix.png", dpi=150)
+    fig.savefig(config.REPORT_DIR / f"confusion_matrix{SUFFIX}.png", dpi=150)
     plt.close(fig)
 
 
@@ -115,7 +124,7 @@ def choose_threshold(probs, y_true, target_acc):
         if chosen is None and kept >= MIN_ACCEPTED and acc >= target_acc:
             chosen = float(round(t, 2))
     if chosen is None:
-        chosen = float(np.floor(np.median(conf) * 100) / 100)
+        chosen = round(float(np.floor(float(np.median(conf)) * 100) / 100), 2)
         print(f"No threshold with >= {MIN_ACCEPTED} photos reached {target_acc:.0%}. "
               f"Fallback: {chosen} keeps the more confident half.")
     return chosen
@@ -150,12 +159,12 @@ def analyze(probs, y_true, paths, classes, target_acc, val_probs, val_true):
     # Embarrassing failures: wrong AND confident
     wrong = np.where(y_pred != y_true)[0]
     wrong = wrong[np.argsort(-conf[wrong])]
-    with open(config.REPORT_DIR / "failures.csv", "w", newline="", encoding="utf-8") as f:
+    with open(config.REPORT_DIR / f"failures{SUFFIX}.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["path", "true", "predicted", "confidence"])
         for i in wrong:
             w.writerow([paths[i], classes[y_true[i]], classes[y_pred[i]], f"{conf[i]:.3f}"])
-    print(f"\n{len(wrong)} errors. Most confident mistakes first: reports/failures.csv")
+    print(f"\n{len(wrong)} errors. Most confident mistakes first: reports/failures{SUFFIX}.csv")
 
     # "Inconclusive" threshold: chosen on validation photos, then checked on test
     chosen = choose_threshold(val_probs, val_true, target_acc)
@@ -164,9 +173,10 @@ def analyze(probs, y_true, paths, classes, target_acc, val_probs, val_true):
     acc_kept = (y_pred[mask] == y_true[mask]).mean() if kept else float("nan")
     print(f"\nOn the test photos, threshold {chosen} keeps {kept} of {len(conf)} "
           f"({mask.mean():.0%}) with accuracy {acc_kept:.1%} on those.")
-    config.THRESHOLD_PATH.parent.mkdir(parents=True, exist_ok=True)
-    config.THRESHOLD_PATH.write_text(json.dumps({"threshold": chosen}))
-    print("Saved confidence threshold:", chosen)
+    threshold_path = config.THRESHOLD_PATH.with_name(f"threshold{SUFFIX}.json")
+    threshold_path.parent.mkdir(parents=True, exist_ok=True)
+    threshold_path.write_text(json.dumps({"threshold": chosen}))
+    print(f"Saved confidence threshold to {threshold_path.name}:", chosen)
 
 
 def main(target_acc):
@@ -192,4 +202,9 @@ def main(target_acc):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--target-acc", type=float, default=0.85)
-    main(ap.parse_args().target_acc)
+    ap.add_argument("--candidate", action="store_true",
+                    help="score skin_model_candidate.pt, save outputs with a _candidate suffix")
+    a = ap.parse_args()
+    if a.candidate:
+        SUFFIX = "_candidate"
+    main(a.target_acc)
